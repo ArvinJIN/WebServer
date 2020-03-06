@@ -12,6 +12,7 @@
 
 class HttpData;
 
+
 class TimerNode {
  public:
   TimerNode(std::shared_ptr<HttpData> requestData, int timeout);
@@ -30,6 +31,7 @@ class TimerNode {
   std::shared_ptr<HttpData> SPHttpData;
 };
 
+//重载比较仿函数，使对头元素最小，使队列按照从小到大的顺序排列
 struct TimerCmp {
   bool operator()(std::shared_ptr<TimerNode> &a,
                   std::shared_ptr<TimerNode> &b) const {
@@ -50,3 +52,10 @@ class TimerManager {
       timerNodeQueue;
   // MutexLock lock;
 };
+
+// priority_queue<Type, Container, Functional>
+// Type为数据类型，Container为保存数据的容器，Functional为元素比较方式。
+// 如果不写后面两个参数，那么容器默认使用的是vector，比较方式默认用operator<，也就是队列
+// 是大顶堆，对头元素最大。
+
+

@@ -34,3 +34,8 @@
 # Otheres
 core
 .vscode
+.DS_Store
+tags
+*.out
+*.log
+WebServer

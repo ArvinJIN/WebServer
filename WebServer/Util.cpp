@@ -13,6 +13,7 @@
 
 
 const int MAX_BUFF = 4096;
+
 ssize_t readn(int fd, void *buff, size_t n) {
   size_t nleft = n;
   ssize_t nread = 0;
@@ -93,6 +94,12 @@ ssize_t readn(int fd, std::string &inBuffer) {
   return readSum;
 }
 
+
+//write 的返回值大于0，表示写入了部分或者全部的数据。
+//返回值小于0，此时出现了错误，我们要根据错误的类型来处理
+//如果错误为EINTR表示在写的时候出现了中断错误
+//如果为EPIPE表示网络连接出现了问题（对方已经关闭了连接）
+
 ssize_t writen(int fd, void *buff, size_t n) {
   size_t nleft = n;
   ssize_t nwritten = 0;
@@ -153,20 +160,23 @@ void handle_for_sigpipe() {
   if (sigaction(SIGPIPE, &sa, NULL)) return;
 }
 
+//使用非阻塞IO
 int setSocketNonBlocking(int fd) {
-  int flag = fcntl(fd, F_GETFL, 0);
+  int flag = fcntl(fd, F_GETFL, 0); //获取文件打开方式的标志
   if (flag == -1) return -1;
 
-  flag |= O_NONBLOCK;
-  if (fcntl(fd, F_SETFL, flag) == -1) return -1;
+  flag |= O_NONBLOCK;//与原来的标志或运算
+  if (fcntl(fd, F_SETFL, flag) == -1) return -1;//重新设置修改后的标志
   return 0;
 }
 
+//TCP_NODELAY不要阻塞，禁用nagle算法
 void setSocketNodelay(int fd) {
   int enable = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (void *)&enable, sizeof(enable));
 }
 
+//close()套接字延迟返回
 void setSocketNoLinger(int fd) {
   struct linger linger_;
   linger_.l_onoff = 1;
@@ -176,7 +186,7 @@ void setSocketNoLinger(int fd) {
 }
 
 void shutDownWR(int fd) {
-  shutdown(fd, SHUT_WR);
+  shutdown(fd, SHUT_WR); //断开输出流。套接字无法发送数据，但如果输出缓冲区中还有未传输的数据，则将传递到目标主机。
   // printf("shutdown\n");
 }
 

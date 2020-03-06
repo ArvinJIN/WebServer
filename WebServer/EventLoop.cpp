@@ -8,7 +8,9 @@
 #include "base/Logging.h"
 
 using namespace std;
-
+//线程局部变量，实质是线程内部的全局变量
+//这个变量记录本线程持有的EventLoop的指针
+//一个线程最多持有一个EventLoop，所以创建EventLoop时检查该指针即可
 __thread EventLoop* t_loopInThisThread = 0;
 
 int createEventfd() {
@@ -32,6 +34,7 @@ EventLoop::EventLoop()
   if (t_loopInThisThread) {
     // LOG << "Another EventLoop " << t_loopInThisThread << " exists in this
     // thread " << threadId_;
+    // 如果t_loopInThisThread不为空，那么说明本线程已经开启了一个EventLoop
   } else {
     t_loopInThisThread = this;
   }
@@ -90,14 +93,14 @@ void EventLoop::queueInLoop(Functor&& cb) {
 }
 
 void EventLoop::loop() {
-  assert(!looping_);
-  assert(isInLoopThread());
+  assert(!looping_); //禁止重复开启loop
+  assert(isInLoopThread()); //禁止跨线程
   looping_ = true;
   quit_ = false;
   // LOG_TRACE << "EventLoop " << this << " start looping";
   std::vector<SP_Channel> ret;
   while (!quit_) {
-    // cout << "doing" << endl;
+    // cout << "doing" << endl; //每次poll调用，就是一次重新填充ret的过程，所以需清空
     ret.clear();
     ret = poller_->poll();
     eventHandling_ = true;

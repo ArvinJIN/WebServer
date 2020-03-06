@@ -24,8 +24,8 @@ int main(int argc, char *argv[]) {
       case 'l': {
         logPath = optarg;
         if (logPath.size() < 2 || optarg[0] != '/') {
-          printf("logPath should start with \"/\"\n");
-          abort();
+          printf("logPath should start with \"/\"\n");  /*need absolute path*/
+          abort(); /*立刻停止，没有清理工作，exit()会做一些清理*/
         }
         break;
       }
@@ -37,13 +37,13 @@ int main(int argc, char *argv[]) {
         break;
     }
   }
-  Logger::setLogFileName(logPath);
+  Logger::setLogFileName(logPath); 
 // STL库在多线程上应用
 #ifndef _PTHREADS
   LOG << "_PTHREADS is not defined !";
 #endif
-  EventLoop mainLoop;
-  Server myHTTPServer(&mainLoop, threadNum, port);
+  EventLoop mainLoop; //建立一个事件循环器Eventloop
+  Server myHTTPServer(&mainLoop, threadNum, port); //建立一个对应的业务服务器
   myHTTPServer.start();
   mainLoop.loop();
   return 0;

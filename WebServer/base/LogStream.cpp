@@ -11,15 +11,20 @@
 const char digits[] = "9876543210123456789";
 const char* zero = digits + 9;
 
-// From muduo
+// From muduo 
+// 将整数转换为字符串
 template <typename T>
 size_t convert(char buf[], T value) {
   T i = value;
   char* p = buf;
 
   do {
-    int lsd = static_cast<int>(i % 10);
+    int lsd = static_cast<int>(i % 10); //得到最后一个数子，
     i /= 10;
+    //(疑问：digits数组为什么是"9876543210123456789"，而不直接赋为"0123456789"？)
+    // const char* zero = digits + 9;
+    // 假如此时获取的lsd值为5，指针zero指向digits[]中的'0'
+    // zero[lsd]再偏移lsd即5个位置，便获取到了字符'5'，保存到了buf中
     *p++ = zero[lsd];
   } while (i != 0);
 
@@ -27,7 +32,7 @@ size_t convert(char buf[], T value) {
     *p++ = '-';
   }
   *p = '\0';
-  std::reverse(buf, p);
+  std::reverse(buf, p); //reverse(first, last)函数用于反转在[first,last)范围内的顺序（包括first指向的元素，不包括last指向的元素），reverse函数没有返回值
 
   return p - buf;
 }

@@ -15,10 +15,10 @@ class HttpData;
 class Channel {
  private:
   typedef std::function<void()> CallBack;
-  EventLoop *loop_;
-  int fd_;
-  __uint32_t events_;
-  __uint32_t revents_;
+  EventLoop *loop_; //持有该Channel的EventLoop的指针
+  int fd_; //Channel对应的fd
+  __uint32_t events_; //该fd_正在监听的事件
+  __uint32_t revents_; //epoll调用后，该fd需要处理的事件，依据它，epoller调用它相应的回调函数
   __uint32_t lastEvents_;
 
   // 方便找到上层持有该Channel的对象
@@ -29,6 +29,7 @@ class Channel {
   int parse_Headers();
   int analysisRequest();
 
+//四种回调函数
   CallBack readHandler_;
   CallBack writeHandler_;
   CallBack errorHandler_;
@@ -47,30 +48,35 @@ class Channel {
     return ret;
   }
 
-  void setReadHandler(CallBack &&readHandler) { readHandler_ = readHandler; }
+//设置回调函数
+  void setReadHandler(CallBack &&readHandler) { 
+    readHandler_ = readHandler; 
+  }
   void setWriteHandler(CallBack &&writeHandler) {
     writeHandler_ = writeHandler;
   }
   void setErrorHandler(CallBack &&errorHandler) {
     errorHandler_ = errorHandler;
   }
-  void setConnHandler(CallBack &&connHandler) { connHandler_ = connHandler; }
+  void setConnHandler(CallBack &&connHandler) { 
+    connHandler_ = connHandler; 
+  }
 
   void handleEvents() {
     events_ = 0;
-    if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
+    if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) { //文件被挂断并且文件不可读
       events_ = 0;
       return;
     }
-    if (revents_ & EPOLLERR) {
+    if (revents_ & EPOLLERR) { //处理错误
       if (errorHandler_) errorHandler_();
       events_ = 0;
       return;
     }
-    if (revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
-      handleRead();
-    }
-    if (revents_ & EPOLLOUT) {
+    if (revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) { //EPOLLIN : 文件可读
+      handleRead();                 //EPOLLPRI : 文件有紧急数据可读
+    }                               //EPOLLRDHUP: 对端关闭连接或者shutdown写入半连接
+    if (revents_ & EPOLLOUT) {      //EPOLLOUT : 文件可写
       handleWrite();
     }
     handleConn();

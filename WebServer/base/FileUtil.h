@@ -16,5 +16,5 @@ class AppendFile : noncopyable {
  private:
   size_t write(const char *logline, size_t len);
   FILE *fp_;
-  char buffer_[64 * 1024];
+  char buffer_[64 * 1024]; //读写缓冲区
 };

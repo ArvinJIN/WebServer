@@ -15,15 +15,22 @@
 #include <iostream>
 using namespace std;
 
+// 这是Reactor模式的核心，每个Reactor线程内部调用一个EventLoop，
+// 内部不停的进行epoll，然后根据fd的返回事件，调用fd对应Channel的相应回调函数
+//
 class EventLoop {
  public:
   typedef std::function<void()> Functor;
   EventLoop();
   ~EventLoop();
+  //开始事件循环，调用该函数的Thread必须是该EventLoop所在的线程
+  //或者说，loop函数绝对不能跨线程调用
   void loop();
   void quit();
   void runInLoop(Functor&& cb);
   void queueInLoop(Functor&& cb);
+
+  // EventLoop在构造时，会记录线程pid, 所以对比该pid与当前线程id就可以判断是否跨线程操作
   bool isInLoopThread() const { return threadId_ == CurrentThread::tid(); }
   void assertInLoopThread() { assert(isInLoopThread()); }
   void shutdown(shared_ptr<Channel> channel) { shutDownWR(channel->getFd()); }

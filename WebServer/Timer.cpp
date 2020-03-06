@@ -8,7 +8,7 @@
 TimerNode::TimerNode(std::shared_ptr<HttpData> requestData, int timeout)
     : deleted_(false), SPHttpData(requestData) {
   struct timeval now;
-  gettimeofday(&now, NULL);
+  gettimeofday(&now, NULL); //将当前时间以timeval结构体返回
   // 以毫秒计
   expiredTime_ =
       (((now.tv_sec % 10000) * 1000) + (now.tv_usec / 1000)) + timeout;
@@ -21,6 +21,7 @@ TimerNode::~TimerNode() {
 TimerNode::TimerNode(TimerNode &tn)
     : SPHttpData(tn.SPHttpData), expiredTime_(0) {}
 
+//更新超时时间
 void TimerNode::update(int timeout) {
   struct timeval now;
   gettimeofday(&now, NULL);
@@ -52,7 +53,7 @@ TimerManager::~TimerManager() {}
 void TimerManager::addTimer(std::shared_ptr<HttpData> SPHttpData, int timeout) {
   SPTimerNode new_node(new TimerNode(SPHttpData, timeout));
   timerNodeQueue.push(new_node);
-  SPHttpData->linkTimer(new_node);
+  SPHttpData->linkTimer(new_node);//？
 }
 
 /* 处理逻辑是这样的~
