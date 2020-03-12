@@ -231,3 +231,11 @@ int socket_bind_listen(int port) {
   }
   return listen_fd;
 }
+
+
+
+// int listen (int socketfd, int backlog)
+// 第一个参数 socketfd 为套接字描述符，第二个参数 backlog，
+// 官方的解释为未完成连接队列的大小，这个参数的大小决定了可以接收的并发数目。
+// 这个参数越大，并发数目理论上也会越大。但是参数过大也会占用过多的系统资源，
+// 一些系统，比如 Linux 并不允许对这个参数进行改变。

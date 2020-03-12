@@ -21,8 +21,8 @@ const int EVENTSNUM = 4096;
 const int EPOLLWAIT_TIME = 10000;
 
 typedef shared_ptr<Channel> SP_Channel;
-
-Epoll::Epoll() : epollFd_(epoll_create1(EPOLL_CLOEXEC)), events_(EVENTSNUM) {
+//epoll_create1()创建epoll实例，返回epfd
+Epoll::Epoll() : epollFd_(epoll_create1(EPOLL_CLOEXEC)), events_(EVENTSNUM) { 
   assert(epollFd_ > 0);
 }
 Epoll::~Epoll() {}
@@ -84,10 +84,11 @@ std::vector<SP_Channel> Epoll::poll() {
         epoll_wait(epollFd_, &*events_.begin(), events_.size(), EPOLLWAIT_TIME);
     if (event_count < 0) perror("epoll wait error");
     std::vector<SP_Channel> req_data = getEventsRequest(event_count);
-    if (req_data.size() > 0) return req_data;
+    if (req_data.size() > 0) return req_data; // req_data 保存需要处理请求的通道
   }
 }
 
+// 处理过期事件
 void Epoll::handleExpired() { timerManager_.handleExpiredEvent(); }
 
 // 分发处理函数

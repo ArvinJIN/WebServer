@@ -25,8 +25,8 @@ class Epoll {
 
  private:
   static const int MAXFDS = 100000;
-  int epollFd_;
-  std::vector<epoll_event> events_;
+  int epollFd_; //以后要监听什么事件注册到这里
+  std::vector<epoll_event> events_; //用于回传待处理事件的“数组”
   std::shared_ptr<Channel> fd2chan_[MAXFDS];
   std::shared_ptr<HttpData> fd2http_[MAXFDS];
   TimerManager timerManager_;

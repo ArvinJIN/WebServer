@@ -48,7 +48,7 @@ class EventLoop {
  private:
   // 声明顺序 wakeupFd_ > pwakeupChannel_
   bool looping_;
-  shared_ptr<Epoll> poller_;
+  shared_ptr<Epoll> poller_; //执行epoll对象
   int wakeupFd_;
   bool quit_;
   bool eventHandling_;

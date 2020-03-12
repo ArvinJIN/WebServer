@@ -32,6 +32,14 @@ void CurrentThread::cacheTid() {
         snprintf(t_tidString, sizeof t_tidString, "%5d ", t_cachedTid);
   }
 }
+// int snprintf(char *str, int n, char * format [, argument, ...]);
+//【参数】str为要写入的字符串；n为要写入的字符的最大数目，超过n会被截断；
+// format为格式化字符串，与printf()函数相同；argument为变量。
+//
+//【返回值】成功则返回参数str 字符串长度，失败则返回-1，错误原因存于errno 中。
+//
+// 比sprintf()多了一个参数，能够控制要写入的字符串的长度，更加安全
+
 
 // 为了在线程中保留name,tid这些数据
 struct ThreadData {

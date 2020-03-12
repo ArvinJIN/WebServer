@@ -8,9 +8,10 @@
 #include "base/Logging.h"
 
 using namespace std;
-//线程局部变量，实质是线程内部的全局变量
-//这个变量记录本线程持有的EventLoop的指针
-//一个线程最多持有一个EventLoop，所以创建EventLoop时检查该指针即可
+// __thread变量每一个线程有一份独立实体，各个线程的值互不干扰。
+// 线程局部变量，实质是线程内部的全局变量
+// 这个变量记录本线程持有的EventLoop的指针
+// 一个线程最多持有一个EventLoop，所以创建EventLoop时检查该指针即可
 __thread EventLoop* t_loopInThisThread = 0;
 
 int createEventfd() {
@@ -23,14 +24,14 @@ int createEventfd() {
 }
 
 EventLoop::EventLoop()
-    : looping_(false),
-      poller_(new Epoll()),
-      wakeupFd_(createEventfd()),
+    : looping_(false), 
+      poller_(new Epoll()), // 创建Epoll对象，并建立epoll实例
+      wakeupFd_(createEventfd()), // 创建一个事件对象，得到其文件描述符fd，用来实现线程间的通知，
       quit_(false),
       eventHandling_(false),
       callingPendingFunctors_(false),
-      threadId_(CurrentThread::tid()),
-      pwakeupChannel_(new Channel(this, wakeupFd_)) {
+      threadId_(CurrentThread::tid()), //当前线程ID
+      pwakeupChannel_(new Channel(this, wakeupFd_)) { //创建一个pwakeupChannel_，用事件对象的文件描述符初始化，来处理线程间的通信
   if (t_loopInThisThread) {
     // LOG << "Another EventLoop " << t_loopInThisThread << " exists in this
     // thread " << threadId_;
@@ -83,12 +84,13 @@ void EventLoop::runInLoop(Functor&& cb) {
     queueInLoop(std::move(cb));
 }
 
+//向任务队列中天街任务
 void EventLoop::queueInLoop(Functor&& cb) {
   {
     MutexLockGuard lock(mutex_);
     pendingFunctors_.emplace_back(std::move(cb));
   }
-
+// 如果是跨线程或者EventLoop正在处理之前的IO任务，那么需要使用wakeup向eventfd写入数据，唤醒epoll
   if (!isInLoopThread() || callingPendingFunctors_) wakeup();
 }
 
@@ -102,10 +104,14 @@ void EventLoop::loop() {
   while (!quit_) {
     // cout << "doing" << endl; //每次poll调用，就是一次重新填充ret的过程，所以需清空
     ret.clear();
-    ret = poller_->poll();
+    // 这一步的实质是进行epoll_wait调用，根据fd的返回事件，填充对应的Channel，以准备后面执行处理事件
+    ret = poller_->poll(); // ret是需要处理的Channel
+    // 开始处理回调函数
     eventHandling_ = true;
-    for (auto& it : ret) it->handleEvents();
+    for (auto& it : ret) it->handleEvents(); // 处理该Channel的回调函数
     eventHandling_ = false;
+    // 执行任务队列中的任务，这些任务可能是线程池内的IO操作，
+    // 因为不能跨线程，所以被转移到Reactor线程
     doPendingFunctors();
     poller_->handleExpired();
   }

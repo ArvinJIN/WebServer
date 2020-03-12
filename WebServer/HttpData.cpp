@@ -111,7 +111,7 @@ std::string MimeType::getMime(const std::string &suffix) {
 
 HttpData::HttpData(EventLoop *loop, int connfd)
     : loop_(loop),
-      channel_(new Channel(loop, connfd)),
+      channel_(new Channel(loop, connfd)), // 为accept_fd_建立一个Channel，并分配一个loop 
       fd_(connfd),
       error_(false),
       connectionState_(H_CONNECTED),
@@ -121,10 +121,10 @@ HttpData::HttpData(EventLoop *loop, int connfd)
       state_(STATE_PARSE_URI),
       hState_(H_START),
       keepAlive_(false) {
-  // loop_->queueInLoop(bind(&HttpData::setHandlers, this));
-  channel_->setReadHandler(bind(&HttpData::handleRead, this));
-  channel_->setWriteHandler(bind(&HttpData::handleWrite, this));
-  channel_->setConnHandler(bind(&HttpData::handleConn, this));
+  // loop_->queueInLoop(bind(&HttpData::setHandlers, this));        // socket accept连接请求后，为已连接
+  channel_->setReadHandler(bind(&HttpData::handleRead, this));      // 套接字描述符accept_fd_建立了一个
+  channel_->setWriteHandler(bind(&HttpData::handleWrite, this));    // Channel，并为该Channel指定回调
+  channel_->setConnHandler(bind(&HttpData::handleConn, this));      // 处理函数。
 }
 
 void HttpData::reset() {

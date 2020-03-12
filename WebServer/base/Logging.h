@@ -38,3 +38,13 @@ class Logger {
 };
 
 #define LOG Logger(__FILE__, __LINE__).stream()
+/*
+这是一个无名对象，当时用"LOG << ..."时:
+1. 构造Logger类型的临时对象，返回LogStream类型变量 
+2. 调用LogStream重载的operator<<操作符，将数据写入到LogStream的Buffer中
+3. 当前语句结束，Logger临时对象析构，调用Logger析构函数，将LogStream中的数据输出
+*/
+
+// __FILE__:返回所在的文件名
+// __LINE__:返回所在的行号
+// __func__:返回所在的函数名
